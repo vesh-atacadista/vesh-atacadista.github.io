@@ -609,5 +609,54 @@ document.head.append(st);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(!t)return;tab=t.dataset.go;txt='';draw()});
 })();
 
+/* ===== Fotos dos catálogos já feitos (carga inicial) */
+(function(){
+let busy=false,msg='',M=null;
+const _pv=prView;
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ');
+const STOP=new Set(['para','com','sem','de','da','do','das','dos','em','por','kit','und','un','pc','pcs','cx','uni']);
+const tk=s=>new Set(norm(s).split(/\s+/).filter(w=>w.length>=3&&!STOP.has(w)||/^\d+$/.test(w)&&w.length>=2));
+function sc(a,b,fa,fb){const A=tk(a),B=tk(b);if(!A.size||!B.size)return 0;let i=0;A.forEach(w=>{if(B.has(w))i++});let s=2*i/(A.size+B.size);if(fa&&fb&&norm(fa).trim()===norm(fb).trim())s+=.12;return s}
+function load(){return new Promise((ok,no)=>{if(window.CARGA_VESH)return ok();const s=document.createElement('script');s.src='carga_inicial.js?v='+Date.now();s.onload=ok;s.onerror=()=>no(new Error('arquivo carga_inicial.js não encontrado no site'));document.head.append(s)})}
+function box(){
+ let h='<div class="card" style="padding:12px 14px;margin-bottom:12px"><b>Fotos dos catálogos já feitos</b>';
+ if(msg)h+='<p class="who" style="margin:6px 0">'+esc(msg)+'</p>';
+ if(M&&M.list){
+  h+='<p style="margin:6px 0 8px;color:var(--mut)">'+M.list.length+' produto(s) sem foto têm correspondência nos catálogos. Desmarque o que estiver errado.</p><div style="overflow-x:auto"><table><tr><th></th><th>Foto</th><th>Produto no sistema</th><th>Item do catálogo</th></tr>';
+  M.list.forEach((m,i)=>{h+='<tr><td><input type="checkbox" data-cgk="'+i+'" '+(m.on?'checked':'')+'></td><td><img src="'+m.foto+'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;background:#fff"></td><td>'+esc(m.p.n)+'<br><span class="who">'+esc(m.p.ref||'')+' · cód. '+m.p.cod+'</span></td><td>'+esc(m.c.n)+'</td></tr>'});
+  h+='</table></div><div class="acts" style="margin-top:8px">'+(busy?'':'<button class="btn" data-cg="apply">Aplicar fotos marcadas</button><button class="btn g" data-cg="cancel">Cancelar</button>')+'</div>'}
+ else{
+  h+='<p style="margin:6px 0 8px;color:var(--mut)">'+(PD.length?'Procura, entre os produtos sem foto, os que existem nos catálogos feitos e coloca a foto. Não troca foto que já existe nem mexe em preço.':'A lista está vazia: traz os 35 produtos dos catálogos já feitos, com as fotos. Custos ficam zerados até a NF.')+'</p>'+(busy?'':'<button class="btn" data-cg="'+(PD.length?'find':'all')+'">'+(PD.length?'Procurar fotos nos catálogos':'Carregar os 35 produtos')+'</button>')}
+ return h+'</div>'}
+prView=function(){let h=_pv();if(VISAO)return h;
+ if(!M&&!busy&&!msg){if(PD.length&&!PD.some(p=>!p.foto))return h}
+ return box()+h};
+VIEWS.d=prView;
+async function up(f){if(DEMO)return f;try{return await cldUp(f)}catch(e){return f}}
+document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.cgk;if(k!==undefined&&M)M.list[+k].on=e.target.checked});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-cg]');if(!t||busy)return;const a=t.dataset.cg;
+ try{
+  if(a==='cancel'){M=null;msg='';draw();return}
+  busy=true;msg='Carregando…';draw();await load();const L=window.CARGA_VESH;
+  if(a==='find'){
+   const used=new Set(),list=[];
+   PD.filter(p=>!p.foto).forEach(p=>{let best=null,bs=0;L.forEach(c=>{const s=sc(p.n,c.n,p.forn,c.forn);if(s>bs){bs=s;best=c}});if(best&&bs>=.5)list.push({p,c:best,foto:best.foto,s:bs,on:true})});
+   list.sort((x,y)=>y.s-x.s);M={list};msg=list.length?'':'Nenhum produto sem foto combinou com os catálogos. Use o botão "Buscar na web" na importação.';if(!list.length)M=null}
+  else if(a==='apply'){
+   const sel=M.list.filter(m=>m.on);let i=0;
+   for(const m of sel){i++;msg='Enviando fotos '+i+' de '+sel.length+'…';draw();const f=await up(m.foto);
+    if(DEMO||!DB){const k=PD.findIndex(x=>x.cod===m.p.cod);if(k>=0)PD[k]={...PD[k],foto:f}}else await DB.collection('produtos').doc(String(m.p.cod)).set({foto:f},{merge:true})}
+   if(DEMO||!DB)LS.set('pd',PD);M=null;msg='';toast(sel.length+' foto(s) aplicada(s)')}
+  else if(a==='all'){
+   const out=[];let i=0;for(const p of L){i++;msg='Enviando fotos '+i+' de '+L.length+'…';draw();const f=await up(p.foto);
+    out.push({cod:p.cod,ref:'',n:p.n,forn:p.forn,un:'un',custo:0,ipi:0,st:0,frete:null,desc:0,cred:0,ean:'',ncm:'',foto:f})}
+   if(DEMO||!DB){out.forEach(o=>{if(!PD.some(x=>+x.cod===o.cod))PD.push(o)});PD.sort((x,y)=>x.cod-y.cod);LS.set('pd',PD)}
+   else{for(let k=0;k<out.length;k+=400){const b=DB.batch();out.slice(k,k+400).forEach(o=>b.set(DB.collection('produtos').doc(String(o.cod)),o));await b.commit()}
+    const r=DB.collection('config').doc('contador');await DB.runTransaction(async tx=>{const d=await tx.get(r);const n=d.exists?d.data().prox:1001;if(n<1036)tx.set(r,{prox:1036})})}
+   msg='';toast(out.length+' produtos carregados')}
+ }catch(er){msg='Não consegui: '+((er&&(er.code||er.message))||'erro')}
+ busy=false;draw()});
+})();
+
 boot();
 </script>
