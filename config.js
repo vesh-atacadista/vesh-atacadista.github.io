@@ -4,5 +4,6 @@ window.PM_FB = {
   projectId: "vesh-atacadista",
   storageBucket: "vesh-atacadista.firebasestorage.app",
   messagingSenderId: "765100510286",
-  appId: "1:765100510286:web:48acdc9751d704a6a3471f"
+  appId: "1:765100510286:web:48acdc9751d704a6a3471f",
+  imgApi: "https://vesh-imagens.ponterepresentacoes.workers.dev/"
 };
