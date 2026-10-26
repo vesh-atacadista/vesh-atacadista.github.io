@@ -658,5 +658,75 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-cg]'
  busy=false;draw()});
 })();
 
+/* ===== Trocar imagem no produto */
+(function(){
+let EW={res:null,busy:false,msg:''};
+const _ef=editForm;
+editForm=function(){let h=_ef();const p=edit;if(!p)return h;
+ const q=[p.n,p.ref,p.forn].filter(Boolean).join(' ');
+ let b='<div style="margin:12px 0 4px"><b>Imagem do produto</b><div style="display:flex;gap:12px;align-items:center;margin:8px 0;flex-wrap:wrap">'+(p.foto?'<img src="'+esc(p.foto)+'" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:8px;background:#fff">':'<span class="who">Sem imagem</span>')+'<div class="acts" style="margin:0">'
+ +(window.PM_FB&&window.PM_FB.imgApi?'<button class="btn s" data-pi="web" '+(EW.busy?'disabled':'')+'>Buscar na web</button>':'')
+ +'<a class="btn g s" target="_blank" rel="noopener" style="text-decoration:none" href="https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q)+'">Abrir busca de imagens</a>'
+ +'<label class="btn g s" style="cursor:pointer">Enviar do aparelho<input type="file" accept="image/*" id="piup" style="display:none"></label>'
+ +(p.foto?'<button class="btn d s" data-pi="rm">Remover imagem</button>':'')+'</div></div>'
+ +(EW.msg?'<p class="who">'+esc(EW.msg)+'</p>':'');
+ if(EW.res)b+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin:8px 0">'+(EW.res.length?EW.res.map((u,i)=>'<button class="btn g" data-pi="pick" data-i="'+i+'" style="padding:3px;height:92px"><img src="'+esc(u)+'" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;background:#fff" onerror="this.parentNode.style.display=\'none\'"></button>').join(''):'<span class="who">Nenhuma imagem encontrada.</span>')+'</div>';
+ b+='</div>';
+ return h.replace('<div class="acts"><button class="btn" data-act="sp">',b+'<div class="acts"><button class="btn" data-act="sp">')};
+async function grava(u){try{return await cldUp(u)}catch(e){return u}}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-pi]');if(!t||!edit)return;const a=t.dataset.pi;
+ if(a==='rm'){edit.foto='';EW={res:null,busy:false,msg:''};draw();return}
+ if(a==='web'){EW={res:null,busy:true,msg:'Buscando…'};draw();
+  try{EW.res=(await webImgs([edit.n,edit.ref,edit.forn].filter(Boolean).join(' ')))||[];EW.msg=''}catch(er){EW.msg='A busca falhou. Use "Abrir busca de imagens" e cole o endereço, ou envie a foto.'}
+  EW.busy=false;draw();return}
+ if(a==='pick'){const u=EW.res[+t.dataset.i];EW.msg='Salvando imagem…';draw();edit.foto=await grava(u);EW={res:null,busy:false,msg:''};draw()}});
+document.addEventListener('change',async e=>{if(e.target.id!=='piup'||!edit)return;const f=e.target.files[0];if(!f)return;EW.msg='Enviando…';draw();try{edit.foto=await fotoArquivo(f);EW={res:null,busy:false,msg:''}}catch(er){EW.msg='Não consegui enviar: '+er.message}draw()});
+})();
+
+/* ===== Fotos em lote (nome do arquivo = código do produto) */
+(function(){
+let LB=null,busy=false,msg='',over=false;
+const _pv=prView;
+const key=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function find(name){
+ const base=name.replace(/\.[^.]+$/,'');let k=key(base);
+ const tryK=k=>PD.find(p=>key(p.cod)===k)||PD.find(p=>p.ref&&key(p.ref)===k)||PD.find(p=>p.ean&&key(p.ean)===k);
+ let p=tryK(k);
+ if(!p){const k2=key(base.replace(/[\s_\-.(]+\d{1,2}\)?$/,''));if(k2&&k2!==k)p=tryK(k2)}
+ return p||null}
+function add(files){
+ const arr=[...files].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|gif)$/i.test(f.name));
+ LB=LB||[];arr.forEach(f=>{const p=find(f.name);LB.push({f,p,url:URL.createObjectURL(f),on:!!p&&!p.foto})});
+ msg=arr.length?'':'Nenhuma imagem encontrada nos arquivos escolhidos.';draw()}
+function box(){
+ let h='<div class="card" id="lbbox" style="padding:12px 14px;margin-bottom:12px'+(over?';outline:2px dashed var(--cu)':'')+'"><b>Fotos em lote</b><p style="margin:6px 0 8px;color:var(--mut)">Escolha várias fotos de uma vez. O <b>nome do arquivo</b> deve ser o código do produto (ex.: <b>1001.jpg</b>), ou a referência/EAN dele. Pode arrastar os arquivos para este quadro.</p>';
+ if(msg)h+='<p class="who">'+esc(msg)+'</p>';
+ if(LB&&LB.length){
+  const ok=LB.filter(x=>x.p).length;
+  h+='<p style="margin:6px 0"><b>'+LB.length+' foto(s)</b> · '+ok+' com produto encontrado'+(LB.length-ok?' · <span style="color:var(--er)">'+(LB.length-ok)+' sem correspondência</span>':'')+'</p><div style="overflow-x:auto"><table><tr><th></th><th>Foto</th><th>Arquivo</th><th>Produto</th></tr>';
+  LB.forEach((x,i)=>{h+='<tr><td><input type="checkbox" data-lbk="'+i+'" '+(x.on?'checked':'')+(x.p?'':' disabled')+'></td><td><img src="'+x.url+'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;background:#fff"></td><td>'+esc(x.f.name)+'</td><td>'+(x.p?esc(x.p.n)+'<br><span class="who">cód. '+x.p.cod+(x.p.foto?' · já tem foto (marque para trocar)':'')+'</span>':'<span style="color:var(--er)">código não encontrado</span>')+'</td></tr>'});
+  h+='</table></div>'}
+ h+='<div class="acts" style="margin-top:8px">'+(busy?'':'<label class="btn'+(LB&&LB.length?' g':'')+'" style="cursor:pointer">Escolher fotos<input type="file" id="lbf" accept="image/*" multiple style="display:none"></label>'+(LB&&LB.some(x=>x.on)?'<button class="btn" data-lb="apply">Aplicar fotos marcadas</button>':'')+(LB&&LB.length?'<button class="btn g" data-lb="clear">Limpar</button>':''))+'</div></div>';
+ return h}
+prView=function(){const h=_pv();return VISAO?h:box()+h};
+VIEWS.d=prView;
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='lbf'){add(t.files);t.value=''}else if(t.dataset&&t.dataset.lbk!==undefined&&LB)LB[+t.dataset.lbk].on=t.checked});
+['dragover','dragenter'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#lbbox')){e.preventDefault();if(!over){over=true;const b=document.getElementById('lbbox');if(b)b.style.outline='2px dashed var(--cu)'}}}));
+document.addEventListener('dragleave',e=>{if(e.target.closest&&e.target.closest('#lbbox')&&!e.relatedTarget?.closest?.('#lbbox')){over=false;const b=document.getElementById('lbbox');if(b)b.style.outline=''}});
+document.addEventListener('drop',e=>{if(e.target.closest&&e.target.closest('#lbbox')){e.preventDefault();over=false;add(e.dataTransfer.files)}});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-lb]');if(!t||busy)return;
+ if(t.dataset.lb==='clear'){LB=null;msg='';draw();return}
+ const sel=LB.filter(x=>x.on&&x.p);if(!sel.length)return;busy=true;let n=0,bad=0;
+ for(const x of sel){n++;msg='Enviando '+n+' de '+sel.length+'…';draw();
+  try{
+   const d=await miniatura(x.f,1000);let url=d;
+   if(!DEMO){try{url=await cldUp(d)}catch(er){url=await miniatura(x.f,360)}}
+   if(DEMO||!DB){const k=PD.findIndex(y=>y.cod===x.p.cod);if(k>=0)PD[k]={...PD[k],foto:url};LS.set('pd',PD)}
+   else await DB.collection('produtos').doc(String(x.p.cod)).set({foto:url},{merge:true});
+   x.done=1}catch(er){bad++}}
+ LB=LB.filter(x=>!x.done);msg=(sel.length-bad)+' foto(s) aplicada(s)'+(bad?' · '+bad+' falharam, tente de novo':'');if(!LB.length)LB=null;
+ busy=false;toast(msg);draw()});
+})();
+
 boot();
 </script>
