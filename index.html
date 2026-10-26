@@ -1,7 +1,7 @@
-<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Vesh Atacadista</title><meta name="theme-color" content="#072138"><script>(function(){var t;try{t=localStorage.getItem('pmp_theme')}catch(e){}if(t!=='light'&&t!=='dark')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.dataset.theme=t})();</script>
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Vesh Atacadista</title><meta name="theme-color" content="#072138"><meta name="color-scheme" content="dark light"><script>(function(){var t;try{t=localStorage.getItem('pmp_theme')}catch(e){}if(t!=='light'&&t!=='dark')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';document.documentElement.dataset.theme=t})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap">
 <style>
-:root{--bg:#072138;--sf:#0c2b4a;--sf2:#0f3256;--ink:#f1f5fa;--mut:#9db3cc;--ln:#1a416b;--cu:#1e9bff;--ok:#2fbf71;--wn:#f2b13c;--er:#ff6b6b;--fd:Sora,system-ui,sans-serif;--fb:'Plus Jakarta Sans',system-ui,sans-serif}
+:root{color-scheme:dark;--bg:#072138;--sf:#0c2b4a;--sf2:#0f3256;--ink:#f1f5fa;--mut:#9db3cc;--ln:#1a416b;--cu:#1e9bff;--ok:#2fbf71;--wn:#f2b13c;--er:#ff6b6b;--fd:Sora,system-ui,sans-serif;--fb:'Plus Jakarta Sans',system-ui,sans-serif}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--fb)}
 button,input,select{font:inherit;color:inherit}
 .top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:5}
@@ -52,6 +52,8 @@ html{-webkit-text-size-adjust:100%}
  .acts>*{flex:1 1 auto}.g2{grid-template-columns:1fr}
  .hd{padding:10px 12px}
 }
+@media(max-width:640px){.top{display:grid!important;grid-template-columns:auto 1fr auto;align-items:center;gap:8px 10px}.top .sp,.top .who{display:none!important}.top #thm{grid-column:3;grid-row:1;justify-self:end}.top .badge{justify-self:start}.top #vis{grid-column:1/3;grid-row:2}.top #out{grid-column:3;grid-row:2}.top #vis,.top #out{width:100%;justify-content:center}.top:not(:has(#out)) #vis{grid-column:1/4}.tabs{scroll-snap-type:x proximity}.tab{scroll-snap-align:start}.hello b{font-size:18px}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile b{font-size:13px}.tile small{font-size:10.5px}.tile{padding:16px 6px}}
+html,body{background:var(--bg)}
 </style>
 <body>
 <div id="app"></div>
