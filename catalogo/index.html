@@ -18,6 +18,8 @@ const PH='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w
 function sync(l){if(!l||!l.length)return 0;let n=0;const have={};P.forEach(x=>have[x.c]=1);const inl={};l.forEach(x=>inl[x.c]=x);
  l.forEach(x=>{if(!have[x.c]){P.push({c:x.c,n:x.n,p:'0',g:x.g||'Outros',m:x.m||'Diversos',f:x.f||'Diversos',i:EXTRA[x.c]||PH,k:''});n++}});
  for(let i=P.length-1;i>=0;i--)if(!inl[P[i].c]){P.splice(i,1);n++}
+ if(typeof byC!=='undefined'){Object.keys(byC).forEach(k=>delete byC[k]);P.forEach(x=>{byC[x.c]=x})}
+ if(typeof byC!=='undefined'&&typeof cart!=='undefined'){try{const raw=JSON.parse(localStorage.getItem('pm_cart')||'{}');Object.keys(raw).forEach(k=>{if(byC[k]&&!cart[k]&&raw[k]>0)cart[k]=raw[k]});Object.keys(cart).forEach(k=>{if(!byC[k])delete cart[k]})}catch(e){}if(typeof dock==='function'){try{dock()}catch(e){}}}
  return n}
 async function run(){try{
  if(Object.keys(last).length&&applyCached(last))draw();
